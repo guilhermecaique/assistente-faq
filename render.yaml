@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: dcarvalho-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app:app --host 0.0.0.0 --port 8000 --proxy-headers"
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: BASE_URL
+        # Troque para seu domínio final da API no Render:
+        value: https://api.dcarvalho.com.br
+      - key: FRONT_ORIGIN
+        value: https://app.dcarvalho.com.br
+      - key: TENANT_ID
+        sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: CLIENT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+  # (Opcional) publique o frontend estático pelo Render
+  - type: static
+    name: dcarvalho-frontend
+    staticPublishPath: static
+    buildCommand: ""
+    routes:
+      # proxy simples para chamar a API pelo mesmo host do front, se quiser:
+      - type: rewrite
+        source: /api/(.*)
+        destination: https://dcarvalho-api.onrender.com/$1
