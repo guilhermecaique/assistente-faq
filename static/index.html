@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>  
+  
+<link rel="icon" href="/favicon.ico?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png?v=2">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FAQ – D. Carvalho</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.0" defer></script>
+  <style>
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css');
+  </style>
+  <style>
+    .bot-message { white-space: pre-line; }
+    [x-cloak]{display:none!important}
+  </style>
+</head>
+<body class="bg-white text-gray-900">
+
+  <div x-data
+  class="w-full bg-white shadow-md border-b
+         grid items-center
+         grid-cols-[3rem_1fr_3rem] sm:grid-cols-[3.5rem_1fr_3.5rem]
+         h-14 sm:h-16 px-2">
+  
+  <button
+    @click="$dispatch('open-sidebar')"
+    class="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg hover:bg-gray-100"
+    aria-label="Abrir menu" title="Menu">
+    <svg class="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="3" y="6" width="18" height="2" rx="1"></rect>
+      <rect x="3" y="11" width="18" height="2" rx="1"></rect>
+      <rect x="3" y="16" width="18" height="2" rx="1"></rect>
+    </svg>
+  </button>
+
+  <!-- Coluna central: logo -->
+  <img src="/static/dcarvalho_logo.png" alt="Logo DCarvalho"
+       class="justify-self-center h-9 sm:h-11 object-contain
+              min-w-0 max-w-[70vw]" />
+
+  <!-- Slot direito para simetria (ou ícones futuros) -->
+  <div class="w-12 h-12 sm:w-14 sm:h-14"></div>
+</div>
+
+  <!-- SIDEBAR -->
+  <div x-data="sidebarMenu()" x-init="init()" @open-sidebar.window="open = true">
+    <div x-cloak x-show="open" @click="open = false"
+         class="fixed inset-0 bg-black/40 z-40" style="display:none"></div>
+
+    <aside x-cloak x-show="open" 
+       x-transition:enter="transition transform duration-300 ease-out"
+       x-transition:enter-start="-translate-x-full"
+       x-transition:enter-end="translate-x-0"
+       x-transition:leave="transition transform duration-300 ease-in"
+       x-transition:leave-start="translate-x-0"
+       x-transition:leave-end="-translate-x-full"
+        class="fixed inset-y-0 left-0
+         w-72 md:w-88 lg:w-[26rem]        <!-- AQUI: larguras -->
+         max-w-[90%] bg-white/80 backdrop-blur-lg z-50
+         shadow-xl shadow-black/20 border-r rounded-r-2xl
+         flex flex-col">
+
+      <!-- Cabeçalho -->
+      <div class="px-4 py-3 sm:py-4 border-b border-black-1000 bg-gradient-to-r from-green-600 to-green-800 rounded-tr-2xl">
+        <img src="/static/dcarvalho_logo_pequeno.png" alt="Menu" class="h-7 sm:h-[30px]">
+        <p class="mt-1 text-base sm:text-lg font-semibold text-white">
+          Olá, <span x-text="userName || '...'" class="font-bold"></span>
+        </p>
+      </div>
+
+      <!-- AÇÕES -->
+<nav class="p-3 sm:p-4 space-y-3 flex-1 min-h-0 flex flex-col overflow-hidden">
+  <!-- Botão Novo chat -->
+  <button
+    type="button"
+    @click.prevent="newChat"
+    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm 
+           bg-green-50 text-gray-1000 hover:bg-green-600 transition"
+  >
+    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 shrink-0">
+      <i class="mdi mdi-plus-circle-outline text-xl"></i>
+    </span>
+    Novo chat
+  </button>
+
+  <!-- Lista de conversas (ÁREA QUE ROLA) -->
+  <div class="mt-4 space-y-2 pr-2 flex-1 min-h-0 overflow-y-auto">
+    <template x-for="thread in threads" :key="thread.id">
+      <div class="flex items-center gap-2 min-w-0">
+        <!-- abrir -->
+        <button
+          type="button"
+          @click.prevent="openThread(thread)"
+          class="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 rounded-lg text-sm 
+                 bg-gray-50 text-gray-800 hover:bg-gray-300 transition"
+        >
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 shrink-0">
+            <i class="mdi mdi-chat-outline text-xl"></i>
+          </span>
+          <span class="truncate" :title="thread.title || 'Sem título'" x-text="thread.title || 'Sem título'"></span>
+        </button>
+
+        <!-- excluir -->
+        <button
+          @click.prevent="deleteThread(thread)"
+          class="ml-1 shrink-0 p-2 rounded-md text-red-500 hover:text-red-700 hover:bg-red-200"
+          title="Excluir conversa"
+          aria-label="Excluir conversa"
+        >
+          <i class="mdi mdi-trash-can-outline text-lg"></i>
+        </button>
+      </div>
+    </template>
+  </div>
+</nav>
+
+      <!-- Botão de sair -->
+      <div class="p-3 sm:p-4 border-t border-gray-200 flex justify-start">
+  <a href="/logout"
+     class="inline-flex items-center gap-2 px-5 py-3 rounded-md text-xs
+            bg-red-600 hover:bg-red-700 text-white shadow-sm transition self-start">
+    <span class="flex items-center justify-center w-4 h-4 rounded-full bg-red-700/40">
+      <i class="mdi mdi-logout-variant text-sm"></i>
+    </span>
+    Sair
+  </a>
+</div>
+    </aside>
+  </div>
+
+  <script>
+    function sidebarMenu() {
+      return {
+        open: false,
+        userName: '',
+        threads: [],
+
+        async init() {
+          try {
+            const res = await fetch('/whoami', { credentials: 'include' });
+            const txt = await res.text();
+            const m = txt.match(/'name':\s*'([^']+)'/);
+            this.userName = m ? m[1] : '';
+
+            const t = await fetch('/threads', { credentials: 'include' });
+            const data = await t.json();
+            this.threads = data.threads || [];
+          } catch (e) {}
+
+          window.addEventListener('threads-refresh', (e) => {
+            const threads = Array.isArray(e.detail) ? e.detail : (e.detail?.threads || []);
+            this.threads = threads;
+          });
+        },
+
+        async newChat() {
+          try {
+            const r = await fetch('/new_session', {
+              method: 'GET',
+              credentials: 'include',
+              cache: 'no-store',
+              headers: { 'Cache-Control': 'no-cache' }
+            });
+            if (!r.ok) throw new Error(`status ${r.status}`);
+            const data = await r.json();
+
+            window.dispatchEvent(new CustomEvent('new-chat', {
+              detail: { thread_id: data.thread_id, mensagem_inicial: data.mensagem_inicial }
+            }));
+
+            fetch(`/threads?ts=${Date.now()}`, {
+              credentials: 'include',
+              cache: 'no-store',
+              headers: { 'Cache-Control': 'no-cache' }
+            })
+              .then(r => r.json())
+              .then(d => window.dispatchEvent(
+                new CustomEvent('threads-refresh', { detail: d.threads })
+              ))
+              .catch(console.error);
+
+            this.open = false;
+          } catch (e) {
+            alert('Não foi possível iniciar um novo chat.');
+            console.error('new_session error', e);
+          }
+        },
+
+        async deleteThread(thread) {
+          if (!confirm("Tem certeza que deseja excluir esta conversa?")) return;
+          try {
+            const r = await fetch(`/threads/${thread.id}`, {
+              method: 'DELETE',
+              credentials: 'include'
+            });
+            if (!r.ok) throw new Error(`status ${r.status}`);
+            this.threads = this.threads.filter(t => t.id !== thread.id);
+
+            if (window.thread_id === thread.id) {
+              window.dispatchEvent(new CustomEvent('thread-deleted'));
+            }
+          } catch (e) {
+            alert("Erro ao excluir conversa.");
+            console.error(e);
+          }
+        },
+        openThread(thread) {
+          window.dispatchEvent(new CustomEvent('open-thread', {
+            detail: thread
+          }));
+          this.open = false;
+        }
+      }
+    }
+  </script>
+
+  <!-- CHAT -->
+  <div x-data="chatBot()" x-init="init()" class="relative p-3 sm:p-6 flex flex-col h-[calc(100svh-70px)]">
+
+    <!-- MENSAGENS -->
+    <div id="messages" class="flex flex-col space-y-4 p-2 sm:p-3 overflow-y-auto h-full">
+      <template x-for="(message, key) in messages" :key="key">
+        <div class="flex items-end" :class="message.from === 'bot' ? '' : 'justify-end'">
+          <div class="flex flex-col space-y-2 leading-tight max-w-[90%] sm:max-w-lg mx-2 text-base sm:text-md" :class="message.from === 'bot' ? 'order-2 items-start' : 'order-1 items-end'">
+            <div>
+              <span class="px-4 py-3 rounded-xl inline-block bot-message"
+                :class="message.from === 'bot' ? 'rounded-bl-none bg-gray-100 text-black-1000' : 'rounded-br-none bg-green-600 text-white'"
+                x-html="message.text">
+              </span>
+            </div>
+          </div>
+          <img :src="message.from === 'bot' ? '/static/agente.jpeg' : '/static/user.png'" alt="avatar"
+            class="w-6 h-6 sm:w-6 sm:h-6 rounded-full" :class="message.from === 'bot' ? 'order-1' : 'order-2'">
+        </div>
+      </template>
+
+      <!-- BOT DIGITANDO -->
+      <div x-show="botTyping">
+        <div class="flex items-end">
+          <div class="flex flex-col space-y-2 text-md leading-tight mx-2 order-2 items-start">
+            <img src="https://support.signal.org/hc/article_attachments/360016877511/typing-animation-3x.gif" alt="digitando" class="w-14 sm:w-16 ml-6" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INPUT (MIC + TIMER + ENVIAR) -->
+    <div class="border-t-2 border-gray-200 px-3 sm:px-4 pt-3 sm:pt-4 mb-2 sm:mb-0 bg-white">
+      <div class="relative flex overflow-visible">
+        <!-- campo  (OBS: sem comentários dentro da tag) -->
+        <input
+          type="text"
+          placeholder="Digite sua pergunta..."
+          autocomplete="off"
+          autofocus
+          @keydown.enter="updateChat($event.target)"
+          class="w-full bg-gray-100 border-2 border-gray-200 rounded-full relative z-10
+         text-base sm:text-md text-gray-600 placeholder-gray-600
+         py-3 sm:py-2 pr-16
+         focus:outline-none focus:border-green-600
+         focus:ring-0.5 focus:ring-green-600 focus:ring-offset-0
+         placeholder-gray-700
+         focus:placeholder-gray-500
+         transition-colors"
+        :class="isRecording ? 'pl-36 sm:pl-36' : 'pl-14 sm:pl-14'"
+          x-ref="input"
+        >
+
+        <!-- MIC + TIMER -->
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 pointer-events-auto">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full h-11 w-11 sm:h-8 sm:w-8 text-white shadow-sm transition-colors"
+            :class="isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+            @click.prevent="toggleVoice()"
+            :title="isRecording ? 'Parar' : 'Falar'"
+            aria-label="Falar"
+          >
+            <i class="mdi" :class="isRecording ? 'mdi-stop' : 'mdi-microphone-outline'"></i>
+          </button>
+
+          <span
+            x-show="isRecording"
+            x-cloak
+            class="inline-flex items-center justify-center px-2 h-7 rounded-full bg-white border text-gray-800 text-sm font-medium shadow-sm z-40 min-w-[46px]"
+            x-text="recordDisplay"
+          ></span>
+        </div>
+
+        <!-- ENVIAR -->
+        <div class="absolute right-3 top-1/2 -translate-y-1/2 z-30 flex items-center">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full h-11 w-11 sm:h-8 sm:w-8 text-white bg-green-600 hover:bg-green-700 shadow"
+            @click.prevent="updateChat($refs.input)"
+            title="Enviar"
+            aria-label="Enviar"
+          >
+            <i class="mdi mdi-arrow-right text-xl leading-none"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTÃO DE SCROLL PARA O FINAL -->
+    <button
+      x-show="showScrollButton"
+      @click="scrollChat"
+      class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-green-700 hover:bg-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition"
+      title="Ir para o final"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    let thread_id = null; // <- global
+  </script>
+
+  <!-- ======== CHAT JS (inalterado na lógica) ======== -->
+  <script>
+function chatBot() {
+  return {
+    botTyping: false,
+    showScrollButton: false,
+    messages: [],
+    threadId: null,
+
+    bootstrapping: false,
+    sendQueue: [],
+
+    // mic/timer (inalterado)
+    isRecording: false,
+    recordStartMs: 0,
+    recordTimerId: null,
+    recordDisplay: '00:00',
+    mediaRecorder: null,
+    audioChunks: [],
+    micStream: null,
+
+    // ==== util ====
+    scrollChat() {
+      const c = document.getElementById("messages");
+      setTimeout(() => {
+        c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+        // após o scroll, recalcula o estado do botão
+        this.triggerScrollButtonRecalc();
+      }, 50);
+    },
+
+    // NOVO: observa scroll, resize e mutações pra manter o botão correto
+    monitorScroll() {
+      const c = document.getElementById('messages');
+      if (!c) return;
+
+      const handler = () => {
+        const hasOverflow = c.scrollHeight > c.clientHeight + 4;
+        const atBottom    = (c.scrollTop + c.clientHeight) >= (c.scrollHeight - 4);
+        this.showScrollButton = hasOverflow && !atBottom;
+      };
+
+      // guarda para eventual limpeza (se quiser)
+      this._scrollHandler = handler;
+
+      c.addEventListener('scroll', handler);
+
+      // redimensionamentos do container (janela, classes responsivas, etc.)
+      this._resizeObs = new ResizeObserver(handler);
+      this._resizeObs.observe(c);
+
+      // novas mensagens, etc.
+      this._mutObs = new MutationObserver(() => requestAnimationFrame(handler));
+      this._mutObs.observe(c, { childList: true, subtree: true });
+
+      // primeiro cálculo
+      requestAnimationFrame(handler);
+
+      // também reage a resize da janela
+      window.addEventListener('resize', handler);
+    },
+
+    // NOVO: helper para forçar recálculo quando necessário
+    triggerScrollButtonRecalc() {
+      const c = document.getElementById('messages');
+      if (!c) { this.showScrollButton = false; return; }
+      requestAnimationFrame(() => {
+        const hasOverflow = c.scrollHeight > c.clientHeight + 4;
+        const atBottom    = (c.scrollTop + c.clientHeight) >= (c.scrollHeight - 4);
+        this.showScrollButton = hasOverflow && !atBottom;
+      });
+    },
+
+    // ==== MIC/STT (sem mudanças funcionais) ====
+    async toggleVoice() {
+      try {
+        if (!this.isRecording) {
+          await this.startRecording();
+        } else {
+          await this.stopRecording();
+        }
+      } catch (err) {
+        console.error('Erro no toggleVoice:', err);
+        this.isRecording = false;
+        if (this.recordTimerId) clearInterval(this.recordTimerId);
+        this.recordTimerId = null;
+        this.recordDisplay = '00:00';
+      }
+    },
+    async startRecording() {
+      this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let mime = '';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mime = 'audio/webm;codecs=opus';
+      else if (MediaRecorder.isTypeSupported('audio/webm')) mime = 'audio/webm';
+      else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) mime = 'audio/ogg;codecs=opus';
+
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(this.micStream, mime ? { mimeType: mime } : undefined);
+      this.mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) this.audioChunks.push(e.data); };
+
+      this.isRecording = true;
+      this.recordStartMs = Date.now();
+      this.recordDisplay = '00:00';
+      if (this.recordTimerId) clearInterval(this.recordTimerId);
+      this.recordTimerId = setInterval(() => {
+        const elapsed = Date.now() - this.recordStartMs;
+        const mm = String(Math.floor(elapsed / 60000)).padStart(2,'0');
+        const ss = String(Math.floor((elapsed % 60000) / 1000)).padStart(2,'0');
+        this.recordDisplay = `${mm}:${ss}`;
+      }, 200);
+
+      this.mediaRecorder.start(100);
+    },
+    async stopRecording() {
+      return new Promise((resolve, reject) => {
+        if (!this.mediaRecorder) {
+          this.isRecording = false;
+          if (this.recordTimerId) clearInterval(this.recordTimerId);
+          this.recordTimerId = null;
+          this.recordDisplay = '00:00';
+          resolve(); return;
+        }
+
+        this.mediaRecorder.onstop = async () => {
+          try {
+            if (this.recordTimerId) clearInterval(this.recordTimerId);
+            this.recordTimerId = null;
+            this.isRecording = false;
+
+            const blob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType || 'audio/webm' });
+
+            if (this.micStream) {
+              this.micStream.getTracks().forEach(t => t.stop());
+              this.micStream = null;
+            }
+
+            const fd = new FormData();
+            const ext = (this.mediaRecorder.mimeType || '').includes('ogg') ? 'ogg' : 'webm';
+            fd.append('file', blob, `gravacao.${ext}`);
+
+            const resp = await fetch('/stt', { method: 'POST', credentials: 'include', body: fd });
+            const data = await resp.json();
+            const texto = (data && data.text) ? data.text.trim() : '';
+
+            if (texto) this.sendText(texto);
+
+            this.mediaRecorder = null;
+            this.audioChunks = [];
+            this.recordDisplay = '00:00';
+            resolve();
+          } catch (err) {
+            console.error('Erro ao finalizar STT:', err);
+            if (this.micStream) {
+              this.micStream.getTracks().forEach(t => t.stop());
+              this.micStream = null;
+            }
+            this.mediaRecorder = null;
+            this.audioChunks = [];
+            this.isRecording = false;
+            if (this.recordTimerId) clearInterval(this.recordTimerId);
+            this.recordTimerId = null;
+            this.recordDisplay = '00:00';
+            reject(err);
+          }
+        };
+
+        try { this.mediaRecorder.stop(); }
+        catch (e) { reject(e); }
+      });
+    },
+
+    // ==== envio com fila (igual), só adicionamos recálculo do botão ====
+    sendText(question) {
+      const doSend = (q) => {
+        this.messages.push({ from: 'user', text: q });
+        this.botTyping = true;
+        this.$nextTick(() => {
+          this.scrollChat();
+          this.triggerScrollButtonRecalc();   // <-- recalc
+        });
+
+        fetch('/perguntar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ texto: q, thread_id: window.thread_id || null })
+        })
+        .then(res => res.json())
+        .then(async data => {
+          this.botTyping = false;
+
+          if (data.thread_id && !this.threadId) {
+            this.threadId = data.thread_id;
+            window.thread_id = data.thread_id;
+            this.bootstrapping = false;
+
+            fetch(`/threads?ts=${Date.now()}`, {
+              credentials: 'include', cache: 'no-store',
+              headers: { 'Cache-Control': 'no-cache' }
+            })
+            .then(r => r.json())
+            .then(d => window.dispatchEvent(new CustomEvent('threads-refresh', { detail: d.threads })))
+            .catch(console.error);
+
+            const rest = [...this.sendQueue];
+            this.sendQueue = [];
+            for (const msg of rest) this.sendText(msg);
+          }
+
+          this.messages.push({ from: 'bot', text: data.resposta || 'Desculpe, não entendi sua pergunta.' });
+          this.$nextTick(() => {
+            this.scrollChat();
+            this.triggerScrollButtonRecalc(); // <-- recalc
+          });
+        })
+        .catch(() => {
+          this.botTyping = false;
+          this.messages.push({ from: 'bot', text: 'Erro ao conectar com o servidor.' });
+          this.$nextTick(() => {
+            this.scrollChat();
+            this.triggerScrollButtonRecalc(); // <-- recalc
+          });
+        });
+      };
+
+      if (!this.threadId && !window.thread_id) {
+        this.bootstrapping = true;
+        this.sendQueue.push(question);
+        if (this.sendQueue.length === 1) {
+          const first = this.sendQueue.shift();
+          doSend(first);
+        }
+        return;
+      }
+
+      doSend(question);
+    },
+
+    updateChat(inputElement) {
+      const question = inputElement.value.trim();
+      if (!question) return;
+      inputElement.value = '';
+      this.sendText(question);
+    },
+
+    async init() {
+      this.monitorScroll(); // já ativa observadores
+
+      // carrega lista de threads
+      try {
+        const t = await fetch('/threads', { credentials: 'include' });
+        const data = await t.json();
+        this.threads = data.threads || [];
+      } catch (e) {
+        this.threads = [];
+      }
+
+      // abre sempre uma nova sessão visual
+      try {
+        const r = await fetch('/new_session', {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        const session = await r.json();
+        this.threadId = null;
+        window.thread_id = null;
+        this.bootstrapping = false;
+        this.sendQueue = [];
+        this.messages = [{ from: 'bot', text: session.mensagem_inicial }];
+      } catch (e) {
+        this.messages = [{ from: 'bot', text: 'Erro ao iniciar um novo chat.' }];
+      }
+
+      this.$nextTick(() => {
+        this.scrollChat();
+        this.showScrollButton = false;     // reseta
+        this.triggerScrollButtonRecalc();  // e calcula
+      });
+
+      // novo chat
+      window.addEventListener('new-chat', (e) => {
+        const tid = e.detail.thread_id || null;
+        this.threadId = tid;
+        window.thread_id = tid;
+        this.bootstrapping = false;
+        this.sendQueue = [];
+        this.messages = [{ from: 'bot', text: e.detail.mensagem_inicial }];
+        this.$nextTick(() => {
+          this.scrollChat();
+          this.showScrollButton = false;
+          this.triggerScrollButtonRecalc();
+        });
+      });
+
+      // abrir thread existente
+      window.addEventListener('open-thread', async (e) => {
+        const thread = e.detail;
+        this.threadId = thread.id;
+        window.thread_id = thread.id;
+        this.bootstrapping = false;
+        this.sendQueue = [];
+        try {
+          const r = await fetch(`/messages/${thread.id}`, { credentials: 'include' });
+          const data = await r.json();
+          this.messages = (data.messages || []).map(m => ({
+            from: m.sender === 'bot' ? 'bot' : 'user',
+            text: m.text
+          }));
+        } catch {
+          this.messages = [{ from: 'bot', text: 'Erro ao carregar a conversa.' }];
+        }
+        this.$nextTick(() => {
+          this.scrollChat();
+          this.showScrollButton = false;
+          this.triggerScrollButtonRecalc();
+        });
+      });
+
+      // thread deletada
+      window.addEventListener('thread-deleted', () => {
+        this.messages = [{ from: 'bot', text: 'Conversa excluída. Inicie um novo chat!' }];
+        this.threadId = null;
+        window.thread_id = null;
+        this.bootstrapping = false;
+        this.sendQueue = [];
+        this.$nextTick(() => {
+          this.showScrollButton = false;
+          this.triggerScrollButtonRecalc();
+        });
+      });
+    }
+  }
+}
+</script>
+</body>
+</html>
