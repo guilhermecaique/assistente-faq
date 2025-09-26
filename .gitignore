@@ -205,3 +205,38 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+#VSCODE
+# virtualenv (Windows)
+Lib/
+Scripts/
+Include/
+pyvenv.cfg
+
+# virtualenv (Linux/macOS)
+bin/
+lib/
+include/
+share/
+etc/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Config/segredos
+.env
+
+# Backups e arquivos temporários
+backup*.py
+backup*.html
+
+# Ferramentas/editores (opcional)
+.vscode/
+.idea/
+.DS_Store
+
+/backup.py
+/backup2.py
+/backup.html
+/backup2.html
