@@ -46,13 +46,13 @@ manuals_path = os.path.join(base_dir, "manuais")
 xlsx_path = os.path.join(base_dir, "colaboradores.xlsx")
 
 # ================= ENTRA ID =================
-BASE_URL       = os.getenv("BASE_URL", "https://d-carvalho-assistente-faq.hf.space").rstrip("/")
+BASE_URL       = os.getenv("BASE_URL", "https://assistente-faq.onrender.com").rstrip("/")
 TENANT_ID      = os.getenv("TENANT_ID", "").strip()
 CLIENT_ID      = os.getenv("CLIENT_ID", "").strip()
 CLIENT_SECRET  = os.getenv("CLIENT_SECRET", "").strip()
 SESSION_SECRET = os.getenv("SESSION_SECRET", "dev-secret")
 REDIRECT_URI   = f"{BASE_URL}/auth/callback"
-IS_LOCAL       = BASE_URL.startswith("https://d-carvalho-assistente-faq.hf.space")
+IS_LOCAL       = BASE_URL.startswith("https://assistente-faq.onrender.com")
 
 # ================= SUPABASE =================
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -770,4 +770,5 @@ app.include_router(protected)
 # --- run ---
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
